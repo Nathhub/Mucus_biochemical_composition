@@ -7,6 +7,7 @@ library(ggplot2)
 library(dplyr)
 library(repr)
 library(moderndive)
+library(readr)
 
 # Change plot size to 3 x 3; default 7x7
 # Point size to 8; default 12
@@ -24,18 +25,19 @@ add.alpha <- function(col, alpha=1){
 }
 
 # Load Ammonium data
-dat <- read.csv("Biochemical_measurements.csv", header = T)
+
+dat <- read_csv("data/Hubot_et_al_2022_data.csv")
 
 dat$ID <- paste(substr(dat$Species,4,7),dat$Replicate,substr(dat$Tissue,1,3),sep = "_")
 dat$ID <- as.factor(dat$ID)
 
-#names(dat)[names(dat)== "OM...DW."] <- "OM"
-#names(dat)[names(dat)== "AFDW...DW."] <- "AFDW"
+#names(dat)[names(dat)== "`OM (%DW)`"] <- "OM"
+#names(dat)[names(dat)== "`AFDW (%DW)`"] <- "AFDW"
 
 # Calculating average and SD of subreplicates
 
-agg        <- aggregate(dat$Percent_DW, by=list(dat$ID, dat$Mol_type), mean)
-agg$SD <- aggregate(dat$Percent_DW, by=list(dat$ID, dat$Mol_type), sd)$x
+agg        <- aggregate(dat$`Mol_conc (%DW)`, by=list(dat$ID, dat$Mol_type), mean)
+agg$SD <- aggregate(dat$`Mol_conc (%DW)`, by=list(dat$ID, dat$Mol_type), sd)$x
 names(agg) <- c("ID","Mol_type","Mean","SD")
 
 mat <- matrix(data = NA, nrow = 3, ncol = 17)
@@ -70,7 +72,7 @@ counter_j <- 1
 
 for (j in levels(dat$Mol_type)) {
   for (i in levels(dat$Tissue)) {
-    prop[counter_i, counter_j] <- mean(dat$Percent_DW[dat$Mol_type==j & dat$Tissue==i])
+    prop[counter_i, counter_j] <- mean(dat$`Mol_conc (%DW)`[dat$Mol_type==j & dat$Tissue==i])
     counter_i <- counter_i+1
   }
   counter_i <- 1
@@ -86,7 +88,7 @@ counter_j <- 1
 
 for (j in levels(dat$Mol_type)) {
   for (i in levels(dat$Tissue)) {
-    st_dev[counter_i, counter_j] <- sd(dat$Percent_DW[dat$Mol_type==j & dat$Tissue==i])
+    st_dev[counter_i, counter_j] <- sd(dat$`Mol_conc (%DW)`[dat$Mol_type==j & dat$Tissue==i])
     counter_i <- counter_i+1
   }
   counter_i <- 1
@@ -101,30 +103,30 @@ percent <- prop
 percent[1,] <- (percent[1,]/tot_body)*100
 percent[2,] <- (percent[2,]/tot_mucus)*100
 
-mean(dat$OM...DW.[dat$Tissue=="body"])
-sd(dat$OM...DW.[dat$Tissue=="body"])
+mean(dat$`OM (%DW)`[dat$Tissue=="body"])
+sd(dat$`OM (%DW)`[dat$Tissue=="body"])
 
-mean(dat$OM...DW.[dat$Tissue=="mucus"])
-sd(dat$OM...DW.[dat$Tissue=="mucus"])
+mean(dat$`OM (%DW)`[dat$Tissue=="mucus"])
+sd(dat$`OM (%DW)`[dat$Tissue=="mucus"])
 
 ### ----------------- Protein VS Lipid  ----------------
 
-plot(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="lipid"],pch=19, col=as.factor(dat$Tissue), xlab="Lipid content (% of DW)", ylab="Protein content (% of DW)")
-abline(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="body"]))
-abline(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]), col="red")
+plot(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"],pch=19, col=as.factor(dat$Tissue), xlab="Lipid content (% of DW)", ylab="Protein content (% of DW)")
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="body"]))
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]), col="red")
 legend("topleft",legend = c("Body","Mucus"), col = c(1,2), pch=19)
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="body"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="lipid"]))
-summary(aov(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="lipid"]*dat$Tissue[dat$Mol_type=="lipid"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="body"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]))
+summary(aov(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]*dat$Tissue[dat$Mol_type=="lipid"]))
 
 # plotting with ggplot 
 
 dw <- subset(dat, Mol_type=="protein")
 dw <- dw[,c(1:4,9)]
 colnames(dw)[5] <- "Protein"
-dw$Lipid <- dat$Percent_DW[dat$Mol_type=="lipid"]
-dw$Carbohydrate <- dat$Percent_DW[dat$Mol_type=="carbohydrate"]
+dw$Lipid <- dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]
+dw$Carbohydrate <- dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]
 
 ggplot(dw, aes(x=Lipid, y=Protein, col=Tissue)) + geom_point() + geom_smooth(method = lm)
 plot <- ggplot(dw, aes(x=Lipid, y=Protein)) + geom_smooth(method = lm)+ geom_smooth(aes(col=Tissue), method = lm)
@@ -132,15 +134,15 @@ plot + geom_point(data=dw, aes(x=Lipid, y=Protein, col=Tissue))
 
  ### ----------------- Protein VS carbo -----------------
 
-plot(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"], pch=19, col=as.factor(dat$Tissue), xlab="Carbohydrate content (% of DW)", ylab="Protein content (% of DW)")
-abline(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
-abline(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]), col="red")
+plot(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"], pch=19, col=as.factor(dat$Tissue), xlab="Carbohydrate content (% of DW)", ylab="Protein content (% of DW)")
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]), col="red")
 legend("topleft",legend = c("Body","Mucus"), col = c(1,2), pch=19)
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]))
-summary(aov(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]*dat$Tissue[dat$Mol_type=="carbohydrate"]))
-summary(aov(dat$Percent_DW[dat$Mol_type=="protein"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]+dat$Tissue[dat$Mol_type=="carbohydrate"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]))
+summary(aov(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]*dat$Tissue[dat$Mol_type=="carbohydrate"]))
+summary(aov(dat$`Mol_conc (%DW)`[dat$Mol_type=="protein"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]+dat$Tissue[dat$Mol_type=="carbohydrate"]))
 
 # plotting with ggplot 
 
@@ -148,16 +150,16 @@ ggplot(dw, aes(x=Carbohydrate, y=Protein)) + geom_smooth(method = lm)+ geom_smoo
 
 # Lipid VS carbo
 
-plot(dat$Percent_DW[dat$Mol_type=="lipid"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"],  pch=19, col=as.factor(dat$Tissue), xlab="Carbohydrate content (% of DW)", ylab="Lipid content (% of DW)")
-abline(lm(dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
-abline(lm(dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]), col="red")
+plot(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"],  pch=19, col=as.factor(dat$Tissue), xlab="Carbohydrate content (% of DW)", ylab="Lipid content (% of DW)")
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]), col="red")
 legend("topleft",legend = c("Body","Mucus"), col = c(1,2), pch=19)
-summary(lm(dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="body"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]~dat$Percent_DW[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]))
-summary(lm(dat$Percent_DW[dat$Mol_type=="lipid"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="body"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="body"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid" & dat$Tissue=="mucus"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate" & dat$Tissue=="mucus"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]))
 
-summary(aov(dat$Percent_DW[dat$Mol_type=="lipid"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]*dat$Tissue[dat$Mol_type=="carbohydrate"]))
-summary(aov(dat$Percent_DW[dat$Mol_type=="lipid"]~dat$Percent_DW[dat$Mol_type=="carbohydrate"]+dat$Tissue[dat$Mol_type=="carbohydrate"]))
+summary(aov(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]*dat$Tissue[dat$Mol_type=="carbohydrate"]))
+summary(aov(dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]+dat$Tissue[dat$Mol_type=="carbohydrate"]))
 
 # plotting with ggplot 
 
@@ -165,10 +167,10 @@ ggplot(dw, aes(x=Carbohydrate, y=Lipid)) + geom_smooth(method = lm)+ geom_smooth
 
 # carbo VS Lipid
 
-plot(dat$Percent_DW[dat$Mol_type=="carbohydrate"]~dat$Percent_DW[dat$Mol_type=="lipid"],  pch=19, col=as.factor(dat$Tissue), xlab="lipid content (% of DW)", ylab="Carbohydrate content (% of DW)")
-abline(lm(dat$Percent_DW[dat$Mol_type=="carbohydrate"]~dat$Percent_DW[dat$Mol_type=="lipid"]))
+plot(dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"],  pch=19, col=as.factor(dat$Tissue), xlab="lipid content (% of DW)", ylab="Carbohydrate content (% of DW)")
+abline(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]))
 legend("topleft",legend = c("Body","Mucus"), col = c(1,2), pch=19)
-summary(lm(dat$Percent_DW[dat$Mol_type=="carbohydrate"]~dat$Percent_DW[dat$Mol_type=="lipid"]))
+summary(lm(dat$`Mol_conc (%DW)`[dat$Mol_type=="carbohydrate"]~dat$`Mol_conc (%DW)`[dat$Mol_type=="lipid"]))
 
 # Organic matter VS AFDW
 
@@ -187,15 +189,15 @@ summary(aov(dat$OM~dat$AFDW+dat$Tissue))
 
 summary(aov(dat$OM ~ dat$AFDW*dat$Tissue))
 
-ggplot(dat[dat$AFDW...DW.>11.3,], aes(x = AFDW...DW., y=OM...DW.)) + geom_smooth(method = lm) + geom_point(aes(x = AFDW...DW., y=OM...DW., colour=Tissue))+ geom_smooth(aes(colour=Tissue), method = lm)
+ggplot(dat[dat$`AFDW (%DW)`>11.3,], aes(x = `AFDW (%DW)`, y=`OM (%DW)`)) + geom_smooth(method = lm) + geom_point(aes(x = `AFDW (%DW)`, y=`OM (%DW)`, colour=Tissue))+ geom_smooth(aes(colour=Tissue), method = lm)
 
 # Calculating average and SD of subreplicates
 
 dat$ID_2 <- paste(substr(dat$Species,4,7),substr(dat$Tissue,1,3),sep = "_")
 dat$ID_2 <- as.factor(dat$ID_2)
 
-agg2        <- aggregate(dat$Percent_DW, by=list(dat$ID_2, dat$Mol_type), mean)
-agg2$SD <- aggregate(dat$Percent_DW, by=list(dat$ID_2, dat$Mol_type), sd)$x
+agg2        <- aggregate(dat$`Mol_conc (%DW)`, by=list(dat$ID_2, dat$Mol_type), mean)
+agg2$SD <- aggregate(dat$`Mol_conc (%DW)`, by=list(dat$ID_2, dat$Mol_type), sd)$x
 names(agg2) <- c("ID","Mol_type","Mean","SD")
 
 mat2 <- matrix(data = NA, nrow = 3, ncol = 9)
@@ -251,48 +253,48 @@ Prop_EC_mucus <- EC_mucus/EC_body
 
 ### ------------- Energy content vs carbon content ---------------
 
-dw$C. <- dat$C.[dat$Mol_type=="lipid"]/100
+dw$'C%' <- dat$'C%'[dat$Mol_type=="lipid"]/100
 
-plot(dw$EC~dw$C., col=dat$Tissue, pch=19, main="Energy content vs carbon content", ylab="Energy Content (KJ g-1 DW)", xlab="Carbon content (g C g-1 DW)")
-abline(lm(dw$EC~dw$C.))
-summary(lm(dw$EC~dw$C.))
-lm1 <- lm(dw$EC~dw$C.)
+plot(dw$EC~dw$'C%', col=dat$Tissue, pch=19, main="Energy content vs carbon content", ylab="Energy Content (KJ g-1 DW)", xlab="Carbon content (g C g-1 DW)")
+abline(lm(dw$EC~dw$'C%'))
+summary(lm(dw$EC~dw$'C%'))
+lm1 <- lm(dw$EC~dw$'C%')
 
-plot <- ggplot(dw, aes(x = C., y=EC)) + geom_smooth(method = lm)+ geom_smooth(aes(col=Tissue), method = lm)
-plot + geom_point(data=dw, aes(x = C., y=EC, col=Tissue, shape=Tissue), size=3)+ theme_classic()+scale_shape_discrete(solid = F)+ theme(axis.text.x=element_text(size=rel(1.3))) + theme(axis.text.y=element_text(size=rel(1.3)))
+plot <- ggplot(dw, aes(x ='C%', y=EC)) + geom_smooth(method = lm)+ geom_smooth(aes(col=Tissue), method = lm)
+plot + geom_point(data=dw, aes(x = 'C%', y=EC, col=Tissue, shape=Tissue), size=3)+ theme_classic()+scale_shape_discrete(solid = F)+ theme(axis.text.x=element_text(size=rel(1.3))) + theme(axis.text.y=element_text(size=rel(1.3)))
 
 coef1 <- lm1$coefficients[1]
 coef2 <- lm1$coefficients[2]
 
-summary(lm(dw$EC[dw$Tissue=="body"]~dw$C.[dw$Tissue=="body"]))
-summary(lm(dw$EC[dw$Tissue=="mucus"]~dw$C.[dw$Tissue=="mucus"]))
+summary(lm(dw$EC[dw$Tissue=="body"]~dw$'C%'[dw$Tissue=="body"]))
+summary(lm(dw$EC[dw$Tissue=="mucus"]~dw$'C%'[dw$Tissue=="mucus"]))
 
-summary(aov(dw$EC~dw$C.*dw$Tissue))
-summary(aov(dw$EC~dw$C.+dw$Tissue))
+summary(aov(dw$EC~dw$'C%'*dw$Tissue))
+summary(aov(dw$EC~dw$'C%'+dw$Tissue))
 
 ### -------------- Carbon and Nitrogen content -----------
 
-mean(dat$C.[dat$Tissue=="body"])
-sd(dat$C.[dat$Tissue=="body"])
-mean(dat$C.[dat$Tissue=="mucus"])
-sd(dat$C.[dat$Tissue=="mucus"])
+mean(dat$'C%'[dat$Tissue=="body"])
+sd(dat$'C%'[dat$Tissue=="body"])
+mean(dat$'C%'[dat$Tissue=="mucus"])
+sd(dat$'C%'[dat$Tissue=="mucus"])
 
 mean(dat$N.[dat$Tissue=="body"])
 sd(dat$N.[dat$Tissue=="body"])
 mean(dat$N.[dat$Tissue=="mucus"])
 sd(dat$N.[dat$Tissue=="mucus"])
 
-dat$C.N <- dat$C./dat$N.
+dat$'C/N' <- dat$'C%'/dat$'N%'
 
-mean(dat$C.N[dat$Tissue=="body"])
-sd(dat$C.N[dat$Tissue=="body"])
-mean(dat$C.N[dat$Tissue=="mucus"])
-sd(dat$C.N[dat$Tissue=="mucus"])
+mean(dat$'C/N'[dat$Tissue=="body"])
+sd(dat$'C/N'[dat$Tissue=="body"])
+mean(dat$'C/N'[dat$Tissue=="mucus"])
+sd(dat$'C/N'[dat$Tissue=="mucus"])
 
-mean(dat$C.N)
-sd(dat$C.N)
+mean(dat$'C/N')
+sd(dat$'C/N')
 
-mean(dat$C.)
-sd(dat$C.)
-mean(dat$N.)
-sd(dat$N.)
+mean(dat$'C%')
+sd(dat$'C%')
+mean(dat$'N%')
+sd(dat$'N%')
